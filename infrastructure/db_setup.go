@@ -16,7 +16,7 @@ var (
 
 func InitDBConnection(dbType DBType) {
 	dbOnce.Do(func() {
-		dsn := "host=localhost user=postgres password=postgres dbname=go_authentication port=5432 sslmode=disable TimeZone=Asia/Kolkata"
+		dsn := "host=postgres user=postgres password=postgres dbname=go_authentication port=5432 sslmode=disable TimeZone=Asia/Kolkata"
 		if dbType == POSTGRES {
 			DB, DBErr = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 			logger.Info().Msg("Initialized connection to DB")
