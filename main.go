@@ -10,6 +10,8 @@ import (
 	"go-authentication/services"
 	"net/http"
 
+	internalMiddlewares "go-authentication/middlewares"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
@@ -23,6 +25,7 @@ var (
 func addMiddlewares(mux *chi.Mux) {
 	mux.Use(middleware.Compress(5, "gzip"))
 	mux.Use(middleware.Recoverer)
+	mux.Use(internalMiddlewares.HTTPanicRecovery)
 }
 
 func addPaths(mux *chi.Mux) {
