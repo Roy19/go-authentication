@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"go-authentication/dtos"
 	infraInterfaces "go-authentication/interfaces/infrastructures"
 	repositoryInterfaces "go-authentication/interfaces/repository"
@@ -65,7 +66,14 @@ type RegisterUserTest struct {
 	serviceOutput dtos.CreateUserDtoResponse
 	serviceError  error
 	returnStatus  int
-	returnValue   dtos.Response
+	returnValue   CreateUserResponse
+	errorString   string
+}
+
+type CreateUserResponse struct {
+	StatusCode int                        `json:"status_code"`
+	Value      dtos.CreateUserDtoResponse `json:"value,omitempty"`
+	Error      string                     `json:"error,omitempty"`
 }
 
 func TestRegisterNewUser(t *testing.T) {
@@ -83,7 +91,7 @@ func TestRegisterNewUser(t *testing.T) {
 			},
 			serviceError: nil,
 			returnStatus: http.StatusCreated,
-			returnValue: dtos.Response{
+			returnValue: CreateUserResponse{
 				StatusCode: http.StatusCreated,
 				Value: dtos.CreateUserDtoResponse{
 					ID:       1,
@@ -91,6 +99,23 @@ func TestRegisterNewUser(t *testing.T) {
 					UserName: "test",
 				},
 			},
+			errorString: "",
+		},
+		{
+			input: dtos.CreateUserDtoRequest{
+				Email:    "test1@test.com",
+				UserName: "test1",
+				Password: "abcd1234",
+			},
+			serviceOutput: dtos.CreateUserDtoResponse{},
+			serviceError:  errors.New("Failed to create new user"),
+			returnStatus:  http.StatusInternalServerError,
+			returnValue: CreateUserResponse{
+				StatusCode: http.StatusInternalServerError,
+				Value:      dtos.CreateUserDtoResponse{},
+				Error:      "Failed to create new user",
+			},
+			errorString: "Failed to create new user",
 		},
 	}
 
@@ -111,7 +136,7 @@ func TestRegisterNewUser(t *testing.T) {
 			t.Errorf("Failed to get a valid return status. Expected: %v, Got: %v", expected, got)
 		}
 
-		var gotBody dtos.Response
+		var gotBody CreateUserResponse
 		expectedBody := test.returnValue
 		if err := json.NewDecoder(rr.Body).Decode(&gotBody); err != nil {
 			t.Errorf("Failed to decode response body")
@@ -123,16 +148,21 @@ func TestRegisterNewUser(t *testing.T) {
 	}
 }
 
-func checkResponses(val1, val2 dtos.Response) bool {
+func checkResponses(val1, val2 CreateUserResponse) bool {
 	if val1.StatusCode != val2.StatusCode {
 		return false
 	}
-	// need better comparison here
-	// if val1.Value != val2.Value {
-	// 	return false
-	// }
-	// if val1.Error != val2.Error {
-	// 	return false
-	// }
+	if val1.Error != val2.Error {
+		return false
+	}
+	if val1.Value.Email != val2.Value.Email {
+		return false
+	}
+	if val1.Value.ID != val2.Value.ID {
+		return false
+	}
+	if val1.Value.UserName != val2.Value.UserName {
+		return false
+	}
 	return true
 }
